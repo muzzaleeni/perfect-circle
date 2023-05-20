@@ -46,7 +46,7 @@
 
         function stopPainting() {
             painting = false;
-            timeout = setTimeout(resetTimeout, 500); // Set a 500ms delay before starting a new drawing
+            timeout = setTimeout(resetTimeout, 10); // Set a 10ms delay before starting a new drawing
         }
 
         function resetTimeout() {
@@ -76,7 +76,7 @@
             var x = coordinates.x;
             var y = coordinates.y;
 
-            ctx.lineWidth = 2; // Adjust the line thickness here
+            ctx.lineWidth = 1; // Adjust the line thickness for drawing
             ctx.lineCap = "round";
             ctx.imageSmoothingEnabled = false; // Disable anti-aliasing
 
@@ -92,6 +92,22 @@
             lastX = x;
             lastY = y;
         }
+
+        function drawBoldPoint() {
+            var centerX = canvas.width / 2;
+            var centerY = canvas.height / 2;
+            var radius = 3;
+            var lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'black';
+            ctx.lineWidth = lineWidth;
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        drawBoldPoint();
     </script>
 </body>
 
