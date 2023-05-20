@@ -4,47 +4,93 @@
 <head>
     <title>Drawing App</title>
     <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
         #canvas {
-            border: 1px solid black;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
 
 <body>
     <h1>Drawing App</h1>
-    <canvas id="canvas" width="800" height="600"></canvas>
+    <canvas id="canvas"></canvas>
 
     <script>
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
 
         var painting = false;
+        var timeout = null;
+        var lastX = 0;
+        var lastY = 0;
 
         canvas.addEventListener("mousedown", startPainting);
         canvas.addEventListener("mouseup", stopPainting);
         canvas.addEventListener("mousemove", draw);
 
         function startPainting(event) {
+            clearTimeout(timeout);
             painting = true;
             draw(event);
         }
 
         function stopPainting() {
             painting = false;
+            timeout = setTimeout(resetTimeout, 500); // Set a 500ms delay before starting a new drawing
+        }
+
+        function resetTimeout() {
+            clearTimeout(timeout);
+            ctx.beginPath(); // Start a new path
+            lastX = 0;
+            lastY = 0;
+        }
+
+        function getMouseCoordinates(event) {
+            var rect = canvas.getBoundingClientRect();
+            var scaleX = canvas.width / rect.width;
+            var scaleY = canvas.height / rect.height;
+            var offsetX = event.clientX - rect.left;
+            var offsetY = event.clientY - rect.top;
+
+            return {
+                x: offsetX * scaleX,
+                y: offsetY * scaleY
+            };
         }
 
         function draw(event) {
-            if (!painting) return;
+            if (!painting || event.buttons !== 1) return; // Exit if not painting or mouse button is not pressed
 
-            var x = event.clientX - canvas.offsetLeft;
-            var y = event.clientY - canvas.offsetTop;
+            var coordinates = getMouseCoordinates(event);
+            var x = coordinates.x;
+            var y = coordinates.y;
 
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 2; // Adjust the line thickness here
             ctx.lineCap = "round";
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
+            ctx.imageSmoothingEnabled = false; // Disable anti-aliasing
+
+            if (lastX === 0 && lastY === 0) {
+                // Move to the starting point of the new drawing
+                ctx.moveTo(x, y);
+            } else {
+                // Draw a line from the last point to the current point
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+
+            lastX = x;
+            lastY = y;
         }
     </script>
 </body>
