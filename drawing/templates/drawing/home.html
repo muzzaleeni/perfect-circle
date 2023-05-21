@@ -4,54 +4,37 @@
 <head>
     <title>Drawing App</title>
     <style>
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-
         #canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            border: 1px solid black;
         }
     </style>
 </head>
 
 <body>
-    <h1>Drawing App</h1>
-    <canvas id="canvas"></canvas>
+    <canvas id="canvas" width="1000" height="600"></canvas>
 
     <script>
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
 
-        var painting = false;
-        var timeout = null;
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        var centralRadius = 5;
+
         var lastX = 0;
         var lastY = 0;
+        var painting = false;
 
         canvas.addEventListener("mousedown", startPainting);
         canvas.addEventListener("mouseup", stopPainting);
         canvas.addEventListener("mousemove", draw);
 
-        function startPainting(event) {
-            clearTimeout(timeout);
+        function startPainting() {
             painting = true;
-            draw(event);
         }
 
         function stopPainting() {
             painting = false;
-            timeout = setTimeout(resetTimeout, 10); // Set a 10ms delay before starting a new drawing
-        }
-
-        function resetTimeout() {
-            clearTimeout(timeout);
-            ctx.beginPath(); // Start a new path
             lastX = 0;
             lastY = 0;
         }
@@ -60,54 +43,83 @@
             var rect = canvas.getBoundingClientRect();
             var scaleX = canvas.width / rect.width;
             var scaleY = canvas.height / rect.height;
-            var offsetX = event.clientX - rect.left;
-            var offsetY = event.clientY - rect.top;
+            var x = (event.clientX - rect.left) * scaleX;
+            var y = (event.clientY - rect.top) * scaleY;
+            return { x: x, y: y };
+        }
 
-            return {
-                x: offsetX * scaleX,
-                y: offsetY * scaleY
-            };
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawCentralPoint();
+        }
+
+        var centralPointTimeoutSet = false;
+        var timeLimitTimeoutSet = false;
+        var timeLimitTimeout;
+
+        function restartGame() {
+            clearCanvas();
+            lastX = 0;
+            lastY = 0;
+            centralPointTimeoutSet = false;
+            timeLimitTimeoutSet = false;
+            clearTimeout(timeLimitTimeout);
+            timeLimitTimeout = setTimeout(function () {
+                alert("Time is up!");
+                restartGame();
+            }, 5000); // 5 seconds (in milliseconds)
         }
 
         function draw(event) {
-            if (!painting || event.buttons !== 1) return; // Exit if not painting or mouse button is not pressed
+            if (!painting || event.buttons !== 1) return;
 
             var coordinates = getMouseCoordinates(event);
             var x = coordinates.x;
             var y = coordinates.y;
 
-            ctx.lineWidth = 1; // Adjust the line thickness for drawing
+            ctx.lineWidth = 1;
             ctx.lineCap = "round";
-            ctx.imageSmoothingEnabled = false; // Disable anti-aliasing
+            ctx.imageSmoothingEnabled = false;
 
             if (lastX === 0 && lastY === 0) {
-                // Move to the starting point of the new drawing
                 ctx.moveTo(x, y);
             } else {
-                // Draw a line from the last point to the current point
                 ctx.lineTo(x, y);
                 ctx.stroke();
+
+                var centralDistance = calculateDistance(x, y, centerX, centerY);
+                var centralDistanceCm = 1.5;
+                var pixelsToCm = 0.0264583333;
+                var centralDistancePixels = centralDistanceCm / pixelsToCm;
+
+                if (centralDistance < centralDistancePixels && !centralPointTimeoutSet) {
+                    centralPointTimeoutSet = true;
+                    alert("Too close to the central point!");
+                    restartGame();
+                    return;
+                }
             }
 
             lastX = x;
             lastY = y;
         }
 
-        function drawBoldPoint() {
-            var centerX = canvas.width / 2;
-            var centerY = canvas.height / 2;
-            var radius = 3;
-            var lineWidth = 1;
-
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-            ctx.fillStyle = 'black';
-            ctx.lineWidth = lineWidth;
-            ctx.fill();
-            ctx.stroke();
+        function calculateDistance(x1, y1, x2, y2) {
+            var dx = x2 - x1;
+            var dy = y2 - y1;
+            return Math.sqrt(dx * dx + dy * dy);
         }
 
-        drawBoldPoint();
+        function drawCentralPoint() {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, centralRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = "black";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        drawCentralPoint();
+        restartGame();
     </script>
 </body>
 
