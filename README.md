@@ -12,7 +12,7 @@ To install Python 3, visit the [Python website](https://www.python.org/downloads
 
 Once you have Python 3 installed, you can install Django by opening a command prompt or terminal and running the following command:
 
-pip install Django
+`pip install Django`
 
 
 ## Running the App
